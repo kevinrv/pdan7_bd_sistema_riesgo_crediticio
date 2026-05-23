@@ -257,3 +257,6 @@ ADD CHECK (estado IN ('activo','inactivo','implementandose'));
 
 ALTER TABLE cuotas
 ADD CONSTRAINT UQ_credito_num_cuota UNIQUE(credito_id, num_cuota);
+
+ALTER TABLE creditos 
+ADD cuenta_id INT NOT NULL FOREIGN KEY (cuenta_id) REFERENCES cuentas(id);
