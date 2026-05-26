@@ -1,0 +1,11 @@
+--Nivel Básico (10 preguntas)
+--Mostrar todos los clientes naturales con sus nombres completos y situación laboral.
+--Mostrar todas las empresas activas y su sector económico.
+--Listar todas las cuentas en moneda PEN.
+--Mostrar todas las solicitudes ingresadas durante el último año.
+--Listar todos los productos crediticios activos.
+--Mostrar todos los créditos con estado vigente.
+--Mostrar todas las cuotas pendientes.
+--Mostrar todos los pagos realizados mediante transferencia.
+--Mostrar el listado de clientes junto con el tipo de cliente (N o J).
+--Mostrar las cuentas creadas ordenadas por saldo de mayor a menor.

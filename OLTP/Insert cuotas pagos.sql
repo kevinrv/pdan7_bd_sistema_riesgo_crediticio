@@ -118,6 +118,7 @@ AS estado_cuota
 
 GO
 
+SELECT*FROM creditos;
 
 
 SELECT*FROM cuotas; 
@@ -133,6 +134,8 @@ GO
 -----------------------------------------
 -- GENERAR PAGOS CONSISTENTES
 -----------------------------------------
+SELECT*FROM pagos;
+
 
 INSERT INTO pagos
 (
@@ -181,7 +184,7 @@ FROM cuotas c
 WHERE c.estado<>'pendiente';
 
 GO
-
+--- Insert detalle cuotas
 INSERT INTO detalle_cuotas_pagos
 (
 cuota_id,
@@ -205,3 +208,6 @@ RIGHT('000000'+CAST(c.id AS VARCHAR),6)
 WHERE c.estado<>'pendiente';
 
 GO
+
+
+SELECT*FROM detalle_cuotas_pagos;
