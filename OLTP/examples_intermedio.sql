@@ -22,8 +22,7 @@ LEFT JOIN personas_juridicas pj ON pj.cliente_id=cliente.id AND cliente.tipo_cli
 --Calcular el saldo total por moneda.
 Select moneda, sum(saldo) as saldo_total from cuentasgroup by moneda
 --Mostrar el monto promedio solicitado por producto crediticio.
-
-
+SELECT     pc.id,    pc.nombre,    AVG(s.monto_solicitado) AS monto_promedio_solicitado,    COUNT(s.id) AS cantidad_solicitudes,    MIN(s.monto_solicitado) AS monto_minimo,    MAX(s.monto_solicitado) AS monto_maximoFROM productos_crediticios pcLEFT JOIN solicitudes s ON pc.id = s.producto_crediticio_idGROUP BY pc.id, pc.nombreORDER BY monto_promedio_solicitado DESC;
 
 --Mostrar cuántas solicitudes existen por estado.
 --Obtener el promedio del score de riesgo.
