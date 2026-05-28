@@ -10,7 +10,9 @@ FROM personas_naturales nt;
 
 --Mostrar todas las empresas activas y su sector económico.
 
-SELECT razon_social, sector_economicoFROM personas_juridicasWHERE estado_empresa='Activo';
+SELECT razon_social, sector_economico
+FROM personas_juridicas
+WHERE estado_empresa='Activo';
 
 
 --Listar todas las cuentas en moneda PEN.
@@ -21,9 +23,22 @@ WHERE moneda='PEN';
 
 --Mostrar todas las solicitudes ingresadas durante el último año.
 
-select codigo_solicitudfrom solicitudeswhere convert(date,fecha_solicitud) between '2025-01-01' and '2025-12-31';
+select codigo_solicitud
+from solicitudes
+where convert(date,fecha_solicitud) between '2025-01-01' and '2025-12-31';
 
-SELECT     codigo_solicitud,    fecha_solicitud,    monto_solicitado,    moneda_solicitada,    estadoFROM     solicitudesWHERE     fecha_solicitud >= '2025/05/25'ORDER BY     fecha_solicitud DESC;
+SELECT 
+    codigo_solicitud,
+    fecha_solicitud,
+    monto_solicitado,
+    moneda_solicitada,
+    estado
+FROM 
+    solicitudes
+WHERE 
+    fecha_solicitud >= '2025/05/25'
+ORDER BY 
+    fecha_solicitud DESC;
 
 --- Solicitudes del ultimo año
 SELECT *
@@ -38,19 +53,28 @@ WHERE fecha_solicitud>=DATEADD(DAY,-365,GETDATE());
 
 --Listar todos los productos crediticios activos.
 
-select nombrefrom productos_crediticioswhere estado='ACTIVO'
+select nombre
+from productos_crediticios
+where estado='ACTIVO'
+
 --Mostrar todos los créditos con estado vigente.
 
-select id, numero_creditofrom creditoswhere estado='VIGENTE'
+select id, numero_credito
+from creditos
+where estado='VIGENTE'
 
 
 --Mostrar todas las cuotas pendientes.
-select *from cuotaswhere estado ='pendiente'
+select *
+from cuotas
+where estado ='pendiente'
 
 --Mostrar todos los pagos realizados mediante transferencia.
 
 
-select *from pagoswhere metodo_pago ='Transferencia'
+select *
+from pagos
+where metodo_pago ='Transferencia'
 
 --Mostrar el listado de clientes junto con el tipo de cliente (N o J).
 
@@ -85,4 +109,5 @@ SELECT*FROM personas_juridicas WHERE id IN(16,36)
 SELECT*FROM personas_naturales WHERE id IN(26)
 --Mostrar las cuentas creadas ordenadas por saldo de mayor a menor.
 
-Select * from cuentasorder by saldo desc
+Select * from cuentas
+order by saldo desc
