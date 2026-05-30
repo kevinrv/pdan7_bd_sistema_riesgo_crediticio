@@ -27,7 +27,27 @@ Clasificar el resultado en:
 - Bajo Riesgo
 - Riesgo Medio
 - Alto Riesgo
+*/
 
+;WITH scores AS
+(
+SELECT 
+id, solicitud_id,score_riesgo, ingresos_mensuales, nivel_endeudamiento,
+(score_riesgo * 0.5)+((ingresos_mensuales / 1000) * 0.3)-(nivel_endeudamiento * 0.2) AS 'Score_final'
+FROM evaluaciones_crediticias
+)
+SELECT sc.*,
+CASE 
+WHEN Score_final<200 THEN 'Alto Riesgo'
+WHEN Score_final<400 THEN 'Riesgo Medio'
+ELSE 'Riesgo Bajo' END AS 'clasificacion'
+FROM solicitudes s
+INNER JOIN scores sc ON sc.solicitud_id=s.id;
+
+
+
+
+/*
 ===========================================================
 EJERCICIO 2
 ===========================================================
