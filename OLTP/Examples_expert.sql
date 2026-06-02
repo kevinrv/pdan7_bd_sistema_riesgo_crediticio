@@ -1,3 +1,5 @@
+USE pdan_bd_sistema_riesgo_crediticio;
+Go
 /*
 ===========================================================
 EJERCICIOS NIVEL EXPERTO
@@ -132,7 +134,25 @@ Mostrar:
 - Cliente
 - Número de cuotas pendientes
 - Score de riesgo
+*/
+SELECT 
+c.id,
+c.tipo_cliente,
+COUNT(ct.id) AS 'num_cuotas',
+ec.score_riesgo
+FROM clientes c
+	INNER JOIN solicitudes s ON s.cliente_id=c.id
+	INNER JOIN evaluaciones_crediticias ec ON ec.solicitud_id=s.id
+	INNER JOIN creditos cr ON cr.evaluacion_crediticia_id=ec.id
+	INNER JOIN cuotas ct ON ct.credito_id=cr.id
+WHERE ct.estado='pendiente' AND ec.score_riesgo<600 
+GROUP BY c.id, c.tipo_cliente, ec.score_riesgo
+HAVING COUNT(ct.id)>3
 
+
+SELECT DISTINCT estado FROM cuotas
+
+/*
 ===========================================================
 EJERCICIO 7
 ===========================================================
