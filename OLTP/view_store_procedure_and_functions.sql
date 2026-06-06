@@ -1,4 +1,7 @@
-﻿/*
+﻿USE pdan_bd_sistema_riesgo_crediticio;
+Go
+
+/*
 ===========================================================
 CURSO: MODELAMIENTO DE DATOS Y SQL SERVER
 TEMA: PROCEDIMIENTOS ALMACENADOS, FUNCIONES Y VISTAS
@@ -493,11 +496,24 @@ usp_listar_clientes
 
 */
 
-CREATE PROCEDURE usp_listar_clientes
+ALTER PROCEDURE usp_listar_clientes
 
 AS
 BEGIN
-select*from clientes;
+SELECT
+DISTINCT
+	cliente.id, 
+	CASE 
+	WHEN pj.razon_social IS NULL 
+		THEN CONCAT(nt.apellido_paterno,' ', nt.apellido_paterno, ' ', nt.nombres)
+	ELSE pj.razon_social END AS 'cliente',
+    CASE WHEN cliente.tipo_cliente = 'N' THEN 'Persona Natural'
+	ELSE 'Persona Juridica' END AS 'Tipo_cliente'
+FROM  clientes cliente 
+	LEFT JOIN personas_naturales nt ON nt.cliente_id=cliente.id AND cliente.tipo_cliente='N'
+	LEFT JOIN personas_juridicas pj ON pj.cliente_id=cliente.id AND cliente.tipo_cliente='J'
+WHERE 
+	 (pj.id IS NOT NULL OR nt.id IS NOT NULL);
 
 END
 
@@ -515,12 +531,48 @@ Crear un procedimiento almacenado que reciba:
 
 Y muestre los datos del cliente.
 
+*/
+
+CREATE PROCEDURE usp_listar_clientes_por_id
+@id_cliente INT
+AS
+BEGIN
+SELECT
+DISTINCT
+	cliente.id, 
+	CASE 
+	WHEN pj.razon_social IS NULL 
+		THEN CONCAT(nt.apellido_paterno,' ', nt.apellido_paterno, ' ', nt.nombres)
+	ELSE pj.razon_social END AS 'cliente',
+    CASE WHEN cliente.tipo_cliente = 'N' THEN 'Persona Natural'
+	ELSE 'Persona Juridica' END AS 'Tipo_cliente'
+FROM  clientes cliente 
+	LEFT JOIN personas_naturales nt ON nt.cliente_id=cliente.id AND cliente.tipo_cliente='N'
+	LEFT JOIN personas_juridicas pj ON pj.cliente_id=cliente.id AND cliente.tipo_cliente='J'
+WHERE 
+	 (pj.id IS NOT NULL OR nt.id IS NOT NULL) AND cliente.id=@id_cliente;
+
+END
+
+EXEC usp_listar_clientes_por_id '1'
+/*
 -----------------------------------------------------------
 EJERCICIO SP03 - BÁSICO
 -----------------------------------------------------------
 
 Crear un procedimiento almacenado para
 listar todos los productos crediticios.
+
+*/
+CREATE PROCEDURE sp_productos_crediticios 
+AS 
+BEGIN 
+SELECT*FROM productos_crediticios
+
+END
+
+EXEC sp_productos_crediticios;
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP04 - INTERMEDIO
@@ -531,6 +583,20 @@ Crear un procedimiento almacenado que reciba:
 @estado
 
 Y muestre las solicitudes según estado.
+
+*/
+SELECT*FROM solicitudes;
+
+CREATE PROCEDURE sp_estado_solicitudes
+@estado VARCHAR(50)
+AS 
+BEGIN
+SELECT*FROM solicitudes WHERE estado=@estado;
+END
+
+EXEC sp_estado_solicitudes 'ingresado'
+
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP05 - INTERMEDIO
@@ -543,6 +609,19 @@ Crear un procedimiento almacenado que reciba:
 
 Y muestre las solicitudes dentro
 del rango de fechas.
+*/
+CREATE PROCEDURE sp_rango_solicitudes
+@fecha_inicio DATE,
+@fecha_fin DATE
+AS 
+BEGIN
+SELECT*FROM solicitudes 
+WHERE CONVERT(DATE,fecha_solicitud) BETWEEN @fecha_inicio AND @fecha_fin;
+END
+
+
+EXEC sp_rango_solicitudes '2025-12-05', '2026-01-01'
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP06 - INTERMEDIO
@@ -554,6 +633,23 @@ Crear un procedimiento almacenado que reciba:
 
 Y muestre todos los créditos
 del cliente.
+*/
+
+CREATE PROCEDURE sp_creditos_cliente
+@cliente_id INT
+AS 
+BEGIN
+
+SELECT cr.*
+FROM clientes cl
+INNER JOIN solicitudes s ON s.cliente_id = cl.id
+INNER JOIN evaluaciones_crediticias ec ON ec.solicitud_id=s.id
+INNER JOIN creditos cr ON cr.evaluacion_crediticia_id=ec.id
+WHERE cl.id=@cliente_id
+ END
+
+ EXEC sp_creditos_cliente 10
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP07 - AVANZADO
@@ -565,12 +661,52 @@ Crear un procedimiento almacenado que reciba:
 
 Y muestre el cronograma de cuotas.
 
+*/
+
+CREATE PROCEDURE sp_cronograma_cuotas
+@credito_id INT
+
+AS 
+
+BEGIN
+
+
+SELECT num_cuota, fecha_vencimiento, total_cuota, estado, saldo_cuota 
+FROM cuotas WHERE credito_id=@credito_id
+
+END
+
+EXEC sp_cronograma_cuotas 5
+
+/*
+
 -----------------------------------------------------------
 EJERCICIO SP08 - AVANZADO
 -----------------------------------------------------------
 
 Crear un procedimiento almacenado para
 calcular la deuda pendiente de un crédito.
+
+*/
+
+ALTER PROCEDURE sp_deuda_credito
+@credito_id INT
+
+AS 
+BEGIN
+DECLARE @deuda DECIMAL(9,2)
+
+SELECT  @deuda=SUM(saldo_cuota)
+FROM cuotas WHERE credito_id=@credito_id;
+
+
+SELECT @deuda AS 'Deuda';
+END
+
+EXEC sp_deuda_credito 5
+
+
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP09 - AVANZADO
