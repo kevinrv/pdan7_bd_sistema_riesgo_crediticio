@@ -717,7 +717,42 @@ mostrar los clientes morosos.
 
 Considerar:
 
-Clientes con al menos una cuota pendiente.
+Clientes con al menos una cuota pendiente a la fecha por producto crediticio*/
+
+
+
+CREATE PROCEDURE sp_clientes_cuotas_pendientes
+@producto_id INT
+AS 
+BEGIN
+SELECT
+DISTINCT
+	cl.id, 
+	CASE 
+	WHEN pj.razon_social IS NULL 
+		THEN CONCAT(nt.apellido_paterno,' ', nt.apellido_paterno, ' ', nt.nombres)
+	ELSE pj.razon_social END AS 'cliente',
+    CASE WHEN cl.tipo_cliente = 'N' THEN 'Persona Natural'
+	ELSE 'Persona Juridica' END AS 'Tipo_cliente'
+FROM  clientes cl 
+	LEFT JOIN personas_naturales nt ON nt.cliente_id=cl.id AND cl.tipo_cliente='N'
+	LEFT JOIN personas_juridicas pj ON pj.cliente_id=cl.id AND cl.tipo_cliente='J'
+	INNER JOIN solicitudes s ON s.cliente_id=cl.id
+WHERE 
+	 (pj.id IS NOT NULL OR nt.id IS NOT NULL) 
+	 AND s.producto_crediticio_id=@producto_id
+	 AND s.id IN 
+		(SELECT DISTINCT ( ec.solicitud_id)
+			FROM evaluaciones_crediticias ec
+			INNER JOIN creditos cr ON cr.evaluacion_crediticia_id=ec.id
+			INNER JOIN cuotas ct ON ct.credito_id=cr.id
+			WHERE ct.fecha_vencimiento<GETDATE() AND ct.estado IN ('pagada parcialmente','pendiente') )
+END
+
+
+EXEC sp_clientes_cuotas_pendientes  3
+
+/*
 
 -----------------------------------------------------------
 EJERCICIO SP10 - AVANZADO
@@ -750,6 +785,84 @@ Proceso:
 
 (Utilizar transacción)
 
+*/
+SELECT*FROM solicitudes;
+ALTER PROCEDURE sp_aprobar_credito
+@solicitud_id INT,
+@score_riesgo DECIMAL(9,2),
+@nivel_e DECIMAL(9,2),
+@deuda_activa DECIMAL(9,2), 
+@deuda_activa_oe DECIMAL(9,2),
+@linea_credito DECIMAL(9,2),
+@linea_credito_oe DECIMAL(9,2),
+@Valor_p DECIMAL(9,2),
+@ingresos_m DECIMAL(9,2),
+----
+@plazo INT,
+@tea DECIMAL(9,2),
+@tcea DECIMAL(9,2),
+@desgravamen DECIMAL(9,2),
+@cuenta_id INT
+
+
+AS
+BEGIN
+
+DECLARE @evaluacion_crediticia_id INT;
+DECLARE @monto_solicitado DECIMAL(9,2);
+DECLARE @valor_cuota DECIMAL(9,2);
+DECLARE @fecha_inicio DATE;
+DECLARE @fecha_fin DATE;
+DECLARE @num_credito INT;
+
+DECLARE @tasa_mensual DECIMAL(18,10);
+
+
+
+--- Cambiar estado de solicitud
+UPDATE solicitudes SET estado = 'aprobada'
+WHERE id=@solicitud_id;
+
+--- Registrar evaluación.
+
+INSERT INTO evaluaciones_crediticias VALUES
+(@solicitud_id,@score_riesgo,@nivel_e, @deuda_activa, @deuda_activa_oe,@linea_credito,@linea_credito_oe,@Valor_p, @ingresos_m, 'Aprobado');
+
+--- Generar el crédito
+SELECT @evaluacion_crediticia_id=MAX(id) FROM evaluaciones_crediticias;
+SELECT @monto_solicitado=monto_solicitado FROM solicitudes WHERE id=@solicitud_id;
+SELECT @fecha_inicio=CONVERT(DATE, GETDATE());
+SELECT @fecha_fin = DATEADD(MONTH, @plazo, @fecha_inicio);
+SELECT @num_credito=MAX(numero_credito)+1 FROM creditos;
+
+SET @tasa_mensual = POWER(1 + (@tea / 100.0), 1.0 / 12.0) - 1;
+
+SET @valor_cuota =
+    @monto_solicitado *
+    (
+        @tasa_mensual * POWER(1 + @tasa_mensual, @plazo)
+    ) /
+    (
+        POWER(1 + @tasa_mensual, @plazo) - 1
+    );
+
+INSERT INTO creditos VALUES
+(@evaluacion_crediticia_id,@monto_solicitado, @plazo,@tea,@tcea,@valor_cuota,@fecha_inicio,@fecha_fin,GETDATE(), @num_credito,@fecha_fin,'vigente',@monto_solicitado,@desgravamen,@cuenta_id)
+
+END
+
+EXEC sp_aprobar_credito 13,'565.5','10000.00','5000.00','5000.00','50000.00','20000.00','10000.00','7500.00','30','0.15','0.2','25.00','13'
+
+
+----
+SELECT*FROM cuentas_clientes WHERE cliente_id=5
+
+
+SELECT*FROM solicitudes;
+SELECT*
+FROM creditos;
+
+/*
 -----------------------------------------------------------
 EJERCICIO SP12 - EXPERTO
 -----------------------------------------------------------
